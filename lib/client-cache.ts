@@ -22,3 +22,4 @@ export function invalidateCache(key?: string): void {
     cache.clear();
   }
 }
+
