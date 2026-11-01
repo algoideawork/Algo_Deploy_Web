@@ -1,6 +1,11 @@
+import { BrokerAccount, Subscription } from "@prisma/client";
 import { prisma } from "../prisma";
 import { createBrokerAdapter } from "../brokers/factory";
 import { ExchangeSegment, OrderAction, OrderRequest, OrderType, ProductType } from "../brokers/types";
+
+export type SubscriptionWithAccount = Subscription & {
+  brokerAccount: BrokerAccount;
+};
 
 export interface IncomingSignalPayload {
   action: "BUY" | "SELL" | "SQUAREOFF";
@@ -81,15 +86,17 @@ export async function processWebhookSignal(
     },
   });
 
-  const activeSubscriptions = strategy.subscriptions.filter(
-    (sub) => sub.brokerAccount && sub.brokerAccount.isActive
+  const activeSubscriptions: SubscriptionWithAccount[] = (
+    strategy.subscriptions as unknown as SubscriptionWithAccount[]
+  ).filter(
+    (sub: SubscriptionWithAccount) => Boolean(sub.brokerAccount && sub.brokerAccount.isActive)
   );
 
   let successCount = 0;
   let failedCount = 0;
 
   // 4. Dispatch Orders in Parallel across all Accounts
-  const executionPromises = activeSubscriptions.map(async (sub) => {
+  const executionPromises = activeSubscriptions.map(async (sub: SubscriptionWithAccount) => {
     const execStartTime = Date.now();
     const account = sub.brokerAccount;
 
@@ -224,7 +231,7 @@ export async function processWebhookSignal(
 
   const settledResults = await Promise.allSettled(executionPromises);
 
-  const executions = settledResults.map((item, idx) => {
+  const executions = settledResults.map((item, idx: number) => {
     if (item.status === "fulfilled") {
       if (item.value.status === "SUCCESS" || item.value.status === "SIMULATED") {
         successCount++;
@@ -234,14 +241,20 @@ export async function processWebhookSignal(
       return item.value;
     } else {
       failedCount++;
-      const account = activeSubscriptions[idx].brokerAccount;
+      const account = activeSubscriptions[idx]?.brokerAccount;
+      const errorMsg =
+        item.reason instanceof Error
+          ? item.reason.message
+          : typeof item.reason === "string"
+          ? item.reason
+          : "Internal failure";
       return {
-        brokerAccountId: account.id,
-        brokerName: account.name,
-        broker: account.broker,
+        brokerAccountId: account?.id || "unknown",
+        brokerName: account?.name || "unknown",
+        broker: account?.broker || "DHAN",
         quantity: 0,
         status: "REJECTED" as const,
-        rejectionReason: item.reason?.message || "Internal failure",
+        rejectionReason: errorMsg,
         latencyMs: Date.now() - startTime,
       };
     }
