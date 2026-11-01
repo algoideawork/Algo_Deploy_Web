@@ -35,6 +35,7 @@ interface BrokerAccount {
 export default function BrokersPage() {
   const [accounts, setAccounts] = useState<BrokerAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncFeedback, setSyncFeedback] = useState<{ id: string; msg: string; funds?: any } | null>(null);
@@ -64,6 +65,9 @@ export default function BrokersPage() {
       const data = await res.json();
       if (data.success) {
         setAccounts(data.accounts);
+        setDbError(null);
+      } else {
+        setDbError(data.error);
       }
     } catch (err) {
       console.error("Failed to load accounts", err);
@@ -180,6 +184,24 @@ export default function BrokersPage() {
           <span>Add Broker Account</span>
         </button>
       </div>
+
+      {/* Database Connection Alert */}
+      {dbError && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2">
+          <div className="flex items-center gap-2 font-bold text-amber-300 text-sm">
+            <AlertCircle className="w-4 h-4 text-amber-400" />
+            <span>PostgreSQL Database Not Connected</span>
+          </div>
+          <p className="text-zinc-300 leading-relaxed">
+            {dbError}
+          </p>
+          <div className="pt-1 flex flex-wrap gap-2 text-[11px] font-mono text-zinc-300">
+            <span className="bg-surface-300/60 px-2 py-1 rounded">1. Get free Postgres URL from <b>Neon.tech</b> or <b>Supabase</b></span>
+            <span className="bg-surface-300/60 px-2 py-1 rounded">2. Paste in <b>.env</b> (DATABASE_URL=...)</span>
+            <span className="bg-surface-300/60 px-2 py-1 rounded">3. Run: <b>npm run build</b> to sync schema</span>
+          </div>
+        </div>
+      )}
 
       {/* Accounts List */}
       {loading ? (

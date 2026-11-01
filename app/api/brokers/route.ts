@@ -33,8 +33,13 @@ export async function GET() {
 
     return NextResponse.json({ success: true, accounts });
   } catch (error) {
+    const isConnError = error instanceof Error && error.message.includes("Can't reach database server");
+    const friendlyError = isConnError
+      ? "Database connection error: Could not reach PostgreSQL. Please provide a valid cloud PostgreSQL DATABASE_URL (e.g. from Neon.tech, Supabase, or Vercel Postgres) in your .env file."
+      : error instanceof Error ? error.message : "Failed to fetch accounts";
+
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Failed to fetch accounts" },
+      { success: false, error: friendlyError },
       { status: 500 }
     );
   }
