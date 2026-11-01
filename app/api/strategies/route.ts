@@ -20,7 +20,10 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, strategies });
+    return NextResponse.json(
+      { success: true, strategies },
+      { headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" } }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Failed to fetch strategies" },

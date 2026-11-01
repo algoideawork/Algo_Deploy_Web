@@ -31,7 +31,10 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, accounts });
+    return NextResponse.json(
+      { success: true, accounts },
+      { headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" } }
+    );
   } catch (error) {
     const isConnError = error instanceof Error && error.message.includes("Can't reach database server");
     const friendlyError = isConnError
