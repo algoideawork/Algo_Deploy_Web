@@ -1,11 +1,34 @@
-import { BrokerAccount, Subscription } from "@prisma/client";
 import { prisma } from "../prisma";
 import { createBrokerAdapter } from "../brokers/factory";
-import { ExchangeSegment, OrderAction, OrderRequest, OrderType, ProductType } from "../brokers/types";
+import {
+  BrokerType,
+  ExchangeSegment,
+  OrderAction,
+  OrderRequest,
+  OrderType,
+  ProductType,
+} from "../brokers/types";
 
-export type SubscriptionWithAccount = Subscription & {
-  brokerAccount: BrokerAccount;
-};
+export interface FollowerAccount {
+  id: string;
+  name: string;
+  broker: BrokerType;
+  clientId: string;
+  apiKey: string;
+  apiSecret?: string | null;
+  pin?: string | null;
+  totpSecret?: string | null;
+  accessToken?: string | null;
+  isActive: boolean;
+  isLiveTrading: boolean;
+}
+
+export interface FollowerSubscription {
+  id?: string;
+  multiplier: number;
+  maxLots?: number | null;
+  brokerAccount: FollowerAccount;
+}
 
 export interface IncomingSignalPayload {
   action: "BUY" | "SELL" | "SQUAREOFF";
@@ -86,17 +109,17 @@ export async function processWebhookSignal(
     },
   });
 
-  const activeSubscriptions: SubscriptionWithAccount[] = (
-    strategy.subscriptions as unknown as SubscriptionWithAccount[]
+  const activeSubscriptions: FollowerSubscription[] = (
+    strategy.subscriptions as unknown as FollowerSubscription[]
   ).filter(
-    (sub: SubscriptionWithAccount) => Boolean(sub.brokerAccount && sub.brokerAccount.isActive)
+    (sub: FollowerSubscription) => Boolean(sub.brokerAccount && sub.brokerAccount.isActive)
   );
 
   let successCount = 0;
   let failedCount = 0;
 
   // 4. Dispatch Orders in Parallel across all Accounts
-  const executionPromises = activeSubscriptions.map(async (sub: SubscriptionWithAccount) => {
+  const executionPromises = activeSubscriptions.map(async (sub: FollowerSubscription) => {
     const execStartTime = Date.now();
     const account = sub.brokerAccount;
 
