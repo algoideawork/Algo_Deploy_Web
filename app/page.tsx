@@ -17,6 +17,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { getCachedData, setCachedData } from "@/lib/client-cache";
 
 interface DashboardStats {
   totalAccounts: number;
@@ -41,8 +42,9 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cachedStats = getCachedData<DashboardStats>("dashboard_stats");
+  const [stats, setStats] = useState<DashboardStats | null>(cachedStats || null);
+  const [loading, setLoading] = useState(!cachedStats);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) {
         setStats(data.stats);
+        setCachedData("dashboard_stats", data.stats);
       }
     } catch (err) {
       console.error("Failed to load dashboard stats", err);

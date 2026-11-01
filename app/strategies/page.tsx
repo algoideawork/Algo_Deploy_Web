@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Code2,
 } from "lucide-react";
+import { getCachedData, setCachedData, invalidateCache } from "@/lib/client-cache";
 
 interface Strategy {
   id: string;
@@ -39,8 +40,9 @@ interface Strategy {
 }
 
 export default function StrategiesPage() {
-  const [strategies, setStrategies] = useState<Strategy[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<Strategy[]>("user_strategies");
+  const [strategies, setStrategies] = useState<Strategy[]>(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedStrategyForPayload, setSelectedStrategyForPayload] = useState<Strategy | null>(null);
@@ -69,6 +71,7 @@ export default function StrategiesPage() {
       const data = await res.json();
       if (data.success) {
         setStrategies(data.strategies);
+        setCachedData("user_strategies", data.strategies);
       }
     } catch (err) {
       console.error("Failed to load strategies", err);

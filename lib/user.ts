@@ -1,6 +1,12 @@
 import { prisma } from "./prisma";
 
+let cachedUser: any = null;
+
 export async function getDefaultUser() {
+  if (cachedUser) {
+    return cachedUser;
+  }
+
   let user = await prisma.user.findFirst();
   if (!user) {
     user = await prisma.user.create({
@@ -11,6 +17,7 @@ export async function getDefaultUser() {
       },
     });
   }
+  cachedUser = user;
   return user;
 }
 

@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { getCachedData, setCachedData, invalidateCache } from "@/lib/client-cache";
 
 interface BrokerAccount {
   id: string;
@@ -33,8 +34,9 @@ interface BrokerAccount {
 }
 
 export default function BrokersPage() {
-  const [accounts, setAccounts] = useState<BrokerAccount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedAccounts = getCachedData<BrokerAccount[]>("broker_accounts");
+  const [accounts, setAccounts] = useState<BrokerAccount[]>(cachedAccounts || []);
+  const [loading, setLoading] = useState(!cachedAccounts);
   const [dbError, setDbError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export default function BrokersPage() {
       const data = await res.json();
       if (data.success) {
         setAccounts(data.accounts);
+        setCachedData("broker_accounts", data.accounts);
         setDbError(null);
       } else {
         setDbError(data.error);

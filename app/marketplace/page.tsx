@@ -16,6 +16,7 @@ import {
   Shield,
   Trash2,
 } from "lucide-react";
+import { getCachedData, setCachedData } from "@/lib/client-cache";
 
 interface MarketplaceStrategy {
   id: string;
@@ -50,14 +51,18 @@ interface ActiveSubscription {
 }
 
 export default function MarketplacePage() {
-  const [strategies, setStrategies] = useState<MarketplaceStrategy[]>([]);
-  const [brokerAccounts, setBrokerAccounts] = useState<UserBrokerAccount[]>([]);
-  const [subscriptions, setSubscriptions] = useState<ActiveSubscription[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedStrats = getCachedData<MarketplaceStrategy[]>("market_strategies");
+  const cachedBrokers = getCachedData<UserBrokerAccount[]>("broker_accounts");
+  const cachedSubs = getCachedData<ActiveSubscription[]>("user_subscriptions");
+
+  const [strategies, setStrategies] = useState<MarketplaceStrategy[]>(cachedStrats || []);
+  const [brokerAccounts, setBrokerAccounts] = useState<UserBrokerAccount[]>(cachedBrokers || []);
+  const [subscriptions, setSubscriptions] = useState<ActiveSubscription[]>(cachedSubs || []);
+  const [loading, setLoading] = useState(!cachedStrats);
 
   // Copy modal
   const [selectedStrategy, setSelectedStrategy] = useState<MarketplaceStrategy | null>(null);
-  const [selectedBrokerId, setSelectedBrokerId] = useState("");
+  const [selectedBrokerId, setSelectedBrokerId] = useState(cachedBrokers?.[0]?.id || "");
   const [multiplier, setMultiplier] = useState(1.0);
   const [maxLots, setMaxLots] = useState<number | "">("");
   const [subscribing, setSubscribing] = useState(false);
@@ -81,14 +86,21 @@ export default function MarketplacePage() {
         subRes.json(),
       ]);
 
-      if (stratData.success) setStrategies(stratData.strategies);
+      if (stratData.success) {
+        setStrategies(stratData.strategies);
+        setCachedData("market_strategies", stratData.strategies);
+      }
       if (brokerData.success) {
         setBrokerAccounts(brokerData.accounts);
-        if (brokerData.accounts.length > 0) {
+        setCachedData("broker_accounts", brokerData.accounts);
+        if (brokerData.accounts.length > 0 && !selectedBrokerId) {
           setSelectedBrokerId(brokerData.accounts[0].id);
         }
       }
-      if (subData.success) setSubscriptions(subData.subscriptions);
+      if (subData.success) {
+        setSubscriptions(subData.subscriptions);
+        setCachedData("user_subscriptions", subData.subscriptions);
+      }
     } catch (err) {
       console.error("Failed to load marketplace data", err);
     } finally {
