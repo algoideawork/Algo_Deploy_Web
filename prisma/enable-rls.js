@@ -25,3 +25,4 @@ enableRLS().catch((err) => {
   console.error("Error enabling RLS:", err);
   process.exit(1);
 });
+
