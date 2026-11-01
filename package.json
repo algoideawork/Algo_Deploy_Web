@@ -4,10 +4,10 @@
   "private": true,
   "description": "Production-grade Algorithmic Deployment & Copy-Trading Platform for Indian Stock Brokers (Zerodha, Dhan, Angel One)",
   "scripts": {
-    "dev": "next dev",
-    "build": "node ./node_modules/prisma/build/index.js generate && next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "node ./node_modules/next/dist/bin/next dev",
+    "build": "node ./node_modules/prisma/build/index.js generate && node ./node_modules/next/dist/bin/next build",
+    "start": "node ./node_modules/next/dist/bin/next start",
+    "lint": "node ./node_modules/next/dist/bin/next lint"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
