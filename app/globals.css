@@ -50,3 +50,8 @@ body {
   box-shadow: 0 0 20px rgba(0, 229, 153, 0.15);
 }
 
+/* Hide Next.js development tools indicator badge */
+nextjs-portal {
+  display: none !important;
+}
+
