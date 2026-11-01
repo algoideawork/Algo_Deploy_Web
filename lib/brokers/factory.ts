@@ -35,3 +35,4 @@ export function createBrokerAdapter(record: RawBrokerRecord): IBrokerAdapter {
       throw new Error(`Unsupported broker type: ${record.broker}`);
   }
 }
+

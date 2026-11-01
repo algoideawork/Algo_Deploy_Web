@@ -25,3 +25,4 @@ export function formatDateTime(date: Date | string): string {
     hour12: true,
   });
 }
+

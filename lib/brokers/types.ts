@@ -59,3 +59,4 @@ export interface IBrokerAdapter {
   placeOrder(order: OrderRequest): Promise<OrderResponse>;
   cancelOrder(orderId: string): Promise<{ success: boolean; message?: string }>;
 }
+

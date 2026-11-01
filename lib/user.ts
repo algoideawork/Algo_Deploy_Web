@@ -13,3 +13,4 @@ export async function getDefaultUser() {
   }
   return user;
 }
+
